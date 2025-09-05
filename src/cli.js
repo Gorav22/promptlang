@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { compile } from './compiler.js';
-import { callGeminiRest } from './gemini.js';
+import { geminiToDslJson } from './gemini.js';
 
 dotenv.config();
 
@@ -32,7 +32,7 @@ async function main() {
       if (!userPrompt) { console.error('Provide a prompt after --gemini'); process.exit(1); }
       const apiKey = process.env.GEMINI_API_KEY;
       console.log('Calling Gemini to translate prompt → DSL...');
-      const dsl = await callGeminiRest(apiKey, userPrompt);
+      const dsl = await geminiToDslJson(apiKey, userPrompt);
       console.log('Gemini returned DSL:\n', dsl);
       const html = compile(dsl);
       fs.writeFileSync(outFile, html, 'utf-8');

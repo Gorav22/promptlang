@@ -1,28 +1,9 @@
-import fetch from 'node-fetch';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-/**
- * Improved Gemini connector.
- *
- * This function instructs the AI to output a strict JSON object representing the PromptLang DSL.
- * The expected JSON shape:
- * {
- *   theme: "dark"|"light",
- *   colors: { primary: "#...", accent: "#..." },
- *   font: "system"|"serif"|"mono"|<google-font-name>,
- *   nav: { links: ["Home","About"] },
- *   hero: { title, subtitle, cta, backgroundImage } ,
- *   sections: [ { type: "features"|"projects"|"custom", heading, items: [ ... ] } ],
- *   cards: { columns: 3, items: [ {title, text, image} ] },
- *   footer: { text }
- * }
- *
- * The implementation below calls a generic REST endpoint. You must replace the URL with a
- * working Gemini endpoint or swap to the official SDK.
- */
-
+// Instruction we send to Gemini
 const INSTRUCTION = `You are an assistant that converts a user's plain-language website request into a strict JSON object.
 Return ONLY valid JSON — no extra explanation.
-Use this schema (example values included):
+Schema example:
 
 {
   theme: "dark",
@@ -38,53 +19,34 @@ Use this schema (example values included):
   footer: { text: "© 2025" }
 }
 
-Only include keys relevant to the design. Do not include commentary or code fences.`;
+Return JSON only, no commentary, no code fences.`;
 
 export async function geminiToDslJson(apiKey, userPrompt) {
-  if (!apiKey) throw new Error('GEMINI API key required');
-  const payload = {
-    prompt: INSTRUCTION + "\nUser prompt:\n" + userPrompt,
-    // Add model or other parameters as required by the endpoint/SDK.
-  };
+  if (!apiKey) throw new Error("GEMINI_API_KEY missing");
 
-  const res = await fetch('https://api.generative.google.example/v1/generate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error('Gemini call failed: ' + res.status + ' ' + txt);
-  }
+  const result = await model.generateContent([INSTRUCTION, "User prompt:\n" + userPrompt]);
 
-  const data = await res.json();
+  const text = result.response.text();
 
-  // Try to extract JSON from several plausible fields
-  let text = data?.output_text || data?.text || JSON.stringify(data);
-  // If the response contains extra commentary, attempt to extract first JSON object
+  // Try to extract JSON safely
   const firstJson = extractFirstJson(text);
   if (firstJson) return JSON.parse(firstJson);
 
-  // Fallback: try to parse the raw text
-  try { return JSON.parse(text); } catch(e) {
-    throw new Error('Could not parse JSON from Gemini response. Raw response:\n' + text);
-  }
+  return JSON.parse(text);
 }
 
 function extractFirstJson(s) {
-  const start = s.indexOf('{');
+  const start = s.indexOf("{");
   if (start === -1) return null;
-  // find matching brace (simple approach)
   let depth = 0;
   for (let i = start; i < s.length; i++) {
-    if (s[i] === '{') depth++;
-    else if (s[i] === '}') {
+    if (s[i] === "{") depth++;
+    else if (s[i] === "}") {
       depth--;
-      if (depth === 0) return s.slice(start, i+1);
+      if (depth === 0) return s.slice(start, i + 1);
     }
   }
   return null;
