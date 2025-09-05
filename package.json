@@ -1,0 +1,26 @@
+{
+  "name": "promptlang",
+  "version": "0.1.0",
+  "description": "PromptLang \u2014 compile simple design prompts into HTML (Tailwind) and optionally use Gemini to translate freeform prompts into the DSL.",
+  "type": "module",
+  "bin": {
+    "promptlang": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node ./src/cli.js",
+    "test": "node ./src/cli.js --example"
+  },
+  "keywords": [
+    "prompt",
+    "dsl",
+    "tailwind",
+    "gemini",
+    "site-generator"
+  ],
+  "author": "Gorav22 <goravjindal86@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "node-fetch": "^3.0.0"
+  }
+}
