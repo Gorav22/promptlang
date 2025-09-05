@@ -3,7 +3,8 @@ export function renderHTML(cfg) {
   const heroSubtitle = cfg.hero?.subtitle || "";
   const footer = cfg.footer?.text || "";
 
-  const html = `<!DOCTYPE html>
+  const files = {
+    "index.html": `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -17,7 +18,8 @@ export function renderHTML(cfg) {
   </main>
   <footer class="p-4 text-center opacity-60">${footer}</footer>
 </body>
-</html>`;
+</html>`
+  };
 
-  return { "index.html": html };
+  return files;
 }

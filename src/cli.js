@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-import fs from 'fs';
-import path from 'path';
-import { geminiToDslJson } from './gemini.js';
-import { compile } from './compiler.js';
+import fs from "fs";
+import path from "path";
+import { geminiGenerateProject } from "./gemini.js";
+import { compile } from "./compiler.js";
 
 const args = process.argv.slice(2);
 const aiMode = args.includes("--ai") || args.includes("--gemini");
 
 async function main() {
-  let userPrompt = args.filter(a => !a.startsWith("--")).join(" ");
+  let userPrompt = args.filter((a) => !a.startsWith("--")).join(" ");
   if (!userPrompt) {
     console.error("Usage: node ./src/cli.js --ai \"your site description\"");
     process.exit(1);
@@ -16,15 +16,15 @@ async function main() {
 
   let cfg;
   if (aiMode) {
-    console.log("Calling Gemini to translate prompt → DSL...");
+    console.log("🤖 Calling Gemini to generate project files...");
     const apiKey = process.env.GEMINI_API_KEY;
-    cfg = await geminiToDslJson(apiKey, userPrompt);
+    cfg = await geminiGenerateProject(apiKey, userPrompt);
   } else {
-    console.error("Only AI mode supported in this demo");
+    console.error("Only AI mode is supported now.");
     process.exit(1);
   }
 
-  console.log("✅ DSL received:", cfg);
+  console.log("✅ Gemini returned project:", cfg.target);
 
   const outDir = path.resolve("./output");
   fs.mkdirSync(outDir, { recursive: true });
@@ -40,7 +40,7 @@ async function main() {
   console.log("🎉 Project generated in ./output/");
 }
 
-main().catch(err => {
-  console.error("Error:", err);
+main().catch((err) => {
+  console.error("❌ Error:", err);
   process.exit(1);
 });

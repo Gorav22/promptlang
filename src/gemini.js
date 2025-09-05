@@ -1,32 +1,44 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const INSTRUCTION = `You are an assistant that converts a plain prompt into a strict JSON config (DSL) for generating a website project.
-Always include a "target" field: "html", "react", or "vue".
-Schema example:
+const INSTRUCTION = ` 
+You are a project generator.
+
+Given a user prompt, return a JSON object with this schema:
 
 {
-  "target": "react",
-  "theme": "dark",
-  "hero": { "title": "AI Designer", "subtitle": "Smart sites" },
-  "sections": [
-    { "type": "projects", "heading": "Projects", "items": [ { "title": "App1", "text": "..." } ] }
-  ],
-  "footer": { "text": "© 2025" }
+  "target": "html" | "react" | "vue" | "nextjs",
+  "files": {
+    "filename": "file content as string",
+    "src/App.jsx": "file content",
+    ...
+  }
 }
 
-Return JSON only. No commentary.`;
+Rules:
+- remember to add whole file code 
+- Always return valid JSON only (no explanations, no markdown fences).
+- Include all files needed to run the project.
+- If "html", give whole html +css project make it designable and very fabulous + include all necessary dependencies and configuration files.
+- If "react", give whole react project make it designable and very fabulous + include all necessary dependencies and configuration files.
+- If "vue", give whole vue project make it designable and very fabulous + include all necessary dependencies and configuration files.
+- If "nextjs", give whole nextjs project make it designable and very fabulous + include all necessary dependencies and configuration files.
+`;
 
-export async function geminiToDslJson(apiKey, userPrompt) {
+export async function geminiGenerateProject(apiKey, userPrompt) {
   if (!apiKey) throw new Error("GEMINI_API_KEY missing");
 
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  const result = await model.generateContent([INSTRUCTION, "User prompt:\n" + userPrompt]);
-  const text = result.response.text();
+  const result = await model.generateContent([
+    INSTRUCTION,
+    "User prompt:\n" + userPrompt,
+  ]);
 
+  const text = result.response.text();
   const json = extractFirstJson(text);
   if (!json) throw new Error("Gemini did not return JSON:\n" + text);
+
   return JSON.parse(json);
 }
 
