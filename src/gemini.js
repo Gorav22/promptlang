@@ -1,10 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { jsonrepair } from "jsonrepair";
 
 const INSTRUCTION = ` 
 You are a project generator.
 
-Given a user prompt, return a JSON object with this schema:
+Return ONLY valid JSON (no markdown, no code fences, no explanations).
 
+Schema:
 {
   "target": "html" | "react" | "vue" | "nextjs",
   "files": {
@@ -15,13 +17,13 @@ Given a user prompt, return a JSON object with this schema:
 }
 
 Rules:
-- remember to add whole file code 
-- Always return valid JSON only (no explanations, no markdown fences).
-- Include all files needed to run the project.
-- If "html", give whole html +css project make it designable and very fabulous + include all necessary dependencies and configuration files.
-- If "react", give whole react project make it designable and very fabulous + include all necessary dependencies and configuration files.
-- If "vue", give whole vue project make it designable and very fabulous + include all necessary dependencies and configuration files.
-- If "nextjs", give whole nextjs project make it designable and very fabulous + include all necessary dependencies and configuration files.
+- Do NOT wrap JSON inside strings.
+- Every value in "files" must be raw string (file code).
+- Always include complete runnable project files.
+- If "html", provide full HTML + CSS + dependencies.
+- If "react", provide full React project.
+- If "vue", provide full Vue project.
+- If "nextjs", provide full Next.js project.
 `;
 
 export async function geminiGenerateProject(apiKey, userPrompt) {
@@ -35,16 +37,38 @@ export async function geminiGenerateProject(apiKey, userPrompt) {
     "User prompt:\n" + userPrompt,
   ]);
 
-  const text = result.response.text();
-  const json = extractFirstJson(text);
-  if (!json) throw new Error("Gemini did not return JSON:\n" + text);
+  let text = result.response.text().trim();
 
-  return JSON.parse(json);
+  
+  text = text.replace(/```json\s*/gi, "")
+             .replace(/```/g, "")
+             .trim();
+
+ 
+  let rawJson = extractFirstJson(text);
+  if (!rawJson) {
+    throw new Error("Gemini did not return JSON:\n" + text);
+  }
+
+ 
+  try {
+    rawJson = jsonrepair(rawJson);
+  } catch (err) {
+    throw new Error("Failed to repair JSON:\n" + rawJson);
+  }
+
+ 
+  try {
+    return JSON.parse(rawJson);
+  } catch (err) {
+    throw new Error("Failed to parse JSON after repair:\n" + rawJson);
+  }
 }
 
 function extractFirstJson(s) {
   const start = s.indexOf("{");
   if (start === -1) return null;
+
   let depth = 0;
   for (let i = start; i < s.length; i++) {
     if (s[i] === "{") depth++;

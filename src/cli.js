@@ -3,15 +3,16 @@ import fs from "fs";
 import path from "path";
 import { geminiGenerateProject } from "./gemini.js";
 import { compile } from "./compiler.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const args = process.argv.slice(2);
-// console.log("Args:", args);
+ 
 const aiMode = args.includes("--ai") || args.includes("--gemini");
-// console.log("AI mode:", aiMode);
+ 
 async function main() {
   let userPrompt = args.filter((a) => !a.startsWith("--")).join(" ");
-  // console.log("userPrompt:", userPrompt);
-  if (!userPrompt) {
+   if (!userPrompt) {
     console.error("Usage: node ./src/cli.js --ai \"your site description\"");
     process.exit(1);
   }
