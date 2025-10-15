@@ -2,49 +2,61 @@ name: Auto Publish (npm + GitHub Packages)
 
 on:
   push:
-    branches: [main] # Runs only on main branch
+    branches: [main]
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write    # Needed for committing the version bump
-      packages: write
+      contents: write    # allows committing version bumps
+      packages: write    # allows publishing to GitHub Packages
 
     steps:
-      - name: Checkout repo
+      # 🧩 Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Set up Node.js
+      # 🧰 Setup Node for npmjs
+      - name: Setup Node.js (npmjs)
         uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
 
+      # 📦 Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests (optional)
+      # 🧪 Run tests (optional)
+      - name: Run tests
         run: npm test || echo "No tests found"
 
-      # 🔹 Auto bump version
+      # 🔹 Bump patch version safely
       - name: Bump patch version
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 🧹 Clean working directory so npm version won't fail
+          git reset --hard
+          git clean -fdx
+
           npm version patch -m "chore: bump version to %s [skip ci]"
+
           git push origin HEAD:main --follow-tags
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # 🟠 Publish to npmjs
-      - name: Publish to npm
+      - name: Publish to npmjs
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # 🟣 Publish to GitHub Packages
-      - name: Set up Node.js for GitHub Packages
+      - name: Setup Node.js (GitHub Packages)
         uses: actions/setup-node@v4
         with:
           node-version: 20
