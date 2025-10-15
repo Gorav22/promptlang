@@ -1,73 +1,57 @@
-name: Auto Publish (npm + GitHub Packages)
+name: Publish npm + GitHub Packages
 
 on:
   push:
     branches: [main]
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write    # allows committing version bumps
-      packages: write    # allows publishing to GitHub Packages
+      contents: write
+      packages: write
 
     steps:
-      # 🧩 Checkout repo
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+    - uses: actions/checkout@v4
 
-      # 🧰 Setup Node for npmjs
-      - name: Setup Node.js (npmjs)
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org/
+    - name: Setup Node.js for npmjs
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        registry-url: https://registry.npmjs.org/
 
-      # 📦 Install dependencies
-      - name: Install dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      # 🧪 Run tests (optional)
-      - name: Run tests
-        run: npm test || echo "No tests found"
+    - name: Run tests
+      run: npm test || echo "No tests found"
 
-      # 🔹 Bump patch version safely
-      - name: Bump patch version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+    - name: Publish to npmjs (unscoped)
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: npm publish --access public
 
-          # 🧹 Clean working directory so npm version won't fail
-          git reset --hard
-          git clean -fdx
+    - name: Prepare package.json for GitHub Packages
+      run: |
+        # Backup original package.json
+        cp package.json package.json.bak
 
-          # 🔹 Bump version
-          npm version patch -m "chore: bump version to %s [skip ci]"
+        # Replace name with scoped package name
+        jq '.name = "@gorav22/promptlang"' package.json > package.scoped.json
 
-          # 🪄 Authenticate with GITHUB_TOKEN for pushing
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+        # Replace package.json with scoped one
+        mv package.scoped.json package.json
 
-          # ✅ Push commit and tag
-          git push origin HEAD:main --follow-tags
+    - name: Setup Node.js for GitHub Packages
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        registry-url: https://npm.pkg.github.com/
 
-      # 🟠 Publish to npmjs
-      - name: Publish to npmjs
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+    - name: Publish to GitHub Packages (scoped)
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+      run: npm publish
 
-      # 🟣 Publish to GitHub Packages
-      - name: Setup Node.js (GitHub Packages)
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: https://npm.pkg.github.com/
-
-      - name: Publish to GitHub Packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
-        run: npm publish
+    - name: Restore original package.json
+      run: mv package.json.bak package.json

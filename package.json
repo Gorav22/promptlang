@@ -29,6 +29,9 @@
     "type": "git",
     "url": "https://github.com/Gorav22/promptlang.git"
   },
+  "publishConfig": {
+    "@gorav22:registry": "https://npm.pkg.github.com/"
+  },
   "bugs": {
     "url": "https://github.com/Gorav22/promptlang/issues"
   },
