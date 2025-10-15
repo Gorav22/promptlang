@@ -32,11 +32,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 🟣 Publish to GitHub Packages
-      - name: Publish to GitHub Packages
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.PROMPT_TOKEN}}
+      # # 🟣 Publish to GitHub Packages
+      # - name: Publish to GitHub Packages
+      #   run: npm publish
+      #   env:
+      #     NODE_AUTH_TOKEN: ${{ secrets.PROMPT_TOKEN}}
 
       # 🟠 Publish to npmjs.com
       - name: Set up Node for npmjs
