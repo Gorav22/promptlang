@@ -8,7 +8,6 @@
   },
   "scripts": {
     "start": "node ./src/cli.js --ai",
-    "test": "node ./src/cli.js --example",
     "manual": "node ./src/cli.js"
   },
   "keywords": [
