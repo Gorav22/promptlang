@@ -1,5 +1,5 @@
 {
-  "name": "@gorav22/promptlang",
+  "name": "promptlang",
   "version": "1.1.8",
   "description": "PromptLang — compile simple design prompts into HTML (Tailwind) and optionally use Gemini to translate freeform prompts into the DSL.",
   "type": "module",
