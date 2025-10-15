@@ -2,57 +2,48 @@ name: Auto Publish (npm + GitHub Packages)
 
 on:
   push:
-    branches: [main]
+    branches: [main] # Runs only on main branch
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write    # allows committing version bumps
-      packages: write    # allows publishing to GitHub Packages
+      contents: write    # Needed for committing the version bump
+      packages: write
 
     steps:
-      # 🧩 Checkout repo
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      # 🔹 Bump patch version safely
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests (optional)
+        run: npm test || echo "No tests found"
+
+      # 🔹 Auto bump version
       - name: Bump patch version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # 🧹 Clean working directory so npm version won't fail
-          git reset --hard
-          git clean -fdx
-
-          # 🔹 Bump version
           npm version patch -m "chore: bump version to %s [skip ci]"
-
-          # 🪄 Authenticate with GITHUB_TOKEN for pushing
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-
-          # ✅ Push commit and tag
           git push origin HEAD:main --follow-tags
 
-      # 🟠 Publish to npmjs
-      - name: Publish to npmjs
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
-
       # 🟣 Publish to GitHub Packages
-      - name: Setup Node.js (GitHub Packages)
+      - name: Set up Node.js for GitHub Packages
         uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com/
-
       - name: Publish to GitHub Packages
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
-        run: npm publish
