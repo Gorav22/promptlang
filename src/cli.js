@@ -4,25 +4,52 @@ import path from "path";
 import { geminiGenerateProject } from "./gemini.js";
 import { compile } from "./compiler.js";
 
-const args = process.argv.slice(2);
-// console.log("Args:", args);
-const aiMode = args.includes("--ai") || args.includes("--gemini");
-// console.log("AI mode:", aiMode);
 async function main() {
-  let userPrompt = args.filter((a) => !a.startsWith("--")).join(" ");
-  // console.log("userPrompt:", userPrompt);
-  if (!userPrompt) {
-    console.error("Usage: node ./src/cli.js --ai \"your site description\"");
+  const args = process.argv.slice(2);
+
+  if (args.length === 0) {
+    console.error("Usage:");
+    console.error("  gorav yourproject.gorav");
+    console.error("  or");
+    console.error('  gorav --ai "Create a weather app using React"');
     process.exit(1);
   }
 
+  const isAiMode = args.includes("--ai");
+  const userArg = args.filter((a) => !a.startsWith("--"))[0];
   let cfg;
-  if (aiMode) {
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("❌ Missing GEMINI_API_KEY in environment variables.");
+    process.exit(1);
+  }
+
+  if (userArg.endsWith(".gorav")) {
+    const filePath = path.resolve(userArg);
+    if (!fs.existsSync(filePath)) {
+      console.error(`❌ Config file not found: ${filePath}`);
+      process.exit(1);
+    }
+
+    console.log("📂 Reading configuration from .gorav file...");
+    const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    const { projectName, description, urls = [] } = jsonData;
+
+    if (!description) {
+      console.error("❌ Missing 'description' in .gorav file.");
+      process.exit(1);
+    }
+
+    console.log(`🤖 Calling Gemini to generate project "${projectName}"...`);
+    cfg = await geminiGenerateProject(apiKey, `${description}\nURLs: ${urls.join(", ")}`);
+  } 
+  else if (isAiMode) {
     console.log("🤖 Calling Gemini to generate project files...");
-    const apiKey = process.env.GEMINI_API_KEY;
-    cfg = await geminiGenerateProject(apiKey, userPrompt);
-  } else {
-    console.error("Only AI mode is supported now.");
+    cfg = await geminiGenerateProject(apiKey, userArg);
+  } 
+  else {
+    console.error("❌ Invalid command. Use a .gorav file or --ai mode.");
     process.exit(1);
   }
 

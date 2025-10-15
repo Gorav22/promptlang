@@ -1,0 +1,140 @@
+.navbar {
+  background: rgba(26, 26, 46, 0.95); /* Semi-transparent dark background */
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 999;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  max-width: 1300px;
+}
+
+.navbar-logo {
+  color: var(--text-light);
+  justify-self: start;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
+.navbar-logo span {
+  color: var(--primary-color);
+  font-size: 1.5em; /* Make brackets larger */
+  margin: 0 5px;
+}
+
+.navbar-logo:hover {
+  color: var(--secondary-color);
+}
+
+.nav-menu {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  grid-gap: 20px;
+  list-style: none;
+  text-align: center;
+  width: 60vw;
+  justify-content: end;
+  margin-right: 2rem;
+}
+
+.nav-item {
+  height: 60px;
+}
+
+.nav-links {
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  padding: 0 1rem;
+  height: 100%;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.nav-links:hover,
+.nav-links.active {
+  color: var(--secondary-color);
+  border-bottom: 3px solid var(--primary-color);
+}
+
+.menu-icon {
+  display: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: var(--text-light);
+}
+
+@media screen and (max-width: 960px) {
+  .navbar-logo {
+    font-size: 1.8rem;
+  }
+
+  .navbar-logo span {
+    font-size: 1.3em;
+  }
+
+  .nav-menu {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 90vh;
+    position: absolute;
+    top: 60px;
+    left: -100%;
+    opacity: 1;
+    transition: all 0.5s ease;
+    background: var(--background-dark);
+    padding-left: 0; /* Remove default ul padding */
+  }
+
+  .nav-menu.active {
+    background: var(--background-dark);
+    left: 0;
+    opacity: 1;
+    transition: all 0.5s ease;
+    z-index: 1;
+  }
+
+  .nav-links {
+    text-align: center;
+    padding: 2rem;
+    width: 100%;
+    display: table;
+    color: var(--text-light);
+  }
+
+  .nav-links:hover,
+  .nav-links.active {
+    background-color: var(--card-bg);
+    color: var(--secondary-color);
+    border-radius: 0;
+    border-bottom: none;
+  }
+
+  .menu-icon {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(-100%, 60%);
+    font-size: 1.8rem;
+    cursor: pointer;
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "projectName": "Todo AI Dashboard",
+  "description": "A simple React dashboard for managing daily tasks with Gemini AI integration.",
+  "urls": [
+    "https://react.dev",
+    "https://tailwindcss.com"
+  ]
+}
