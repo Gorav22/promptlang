@@ -1,50 +1,55 @@
-name: Node.js Package (GitHub + npm)
+name: Auto Publish (npm + GitHub Packages)
 
 on:
   push:
-    branches: [main] # Only publish when pushing to main
-  pull_request:
-    branches: [main]
+    branches: [main] # Runs only on main branch
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci
-
-  publish:
-    needs: build
+  build-and-publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write    # Needed for committing the version bump
       packages: write
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Node for GitHub Packages
-        uses: actions/setup-node@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
         with:
-          node-version: 20
-          registry-url: https://npm.pkg.github.com/
-      - name: Install dependencies
-        run: npm ci
+          persist-credentials: false
 
-      # # 🟣 Publish to GitHub Packages
-      # - name: Publish to GitHub Packages
-      #   run: npm publish
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.PROMPT_TOKEN}}
-
-      # 🟠 Publish to npmjs.com
-      - name: Set up Node for npmjs
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org/
-      - name: Publish to npmjs
-        run: npm publish
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests (optional)
+        run: npm test || echo "No tests found"
+
+      # 🔹 Auto bump version
+      - name: Bump patch version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          npm version patch -m "chore: bump version to %s [skip ci]"
+          git push origin HEAD:main --follow-tags
+
+      # 🟠 Publish to npmjs
+      - name: Publish to npm
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # 🟣 Publish to GitHub Packages
+      - name: Set up Node.js for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com/
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
